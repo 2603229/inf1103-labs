@@ -1,4 +1,5 @@
-149
-50
-90
-9
+1001,wireless mouse,2
+1002,robot,3
+1003,vacuum,90
+1004,wireless mouse,2
+1005,mouse,2

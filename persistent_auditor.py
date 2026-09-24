@@ -1,101 +1,174 @@
+# Load existing orders from inventory.txt
 def load_inventory():
+    orders = []
+
     try:
-        file = open("inventory.txt", "r")
+        with open("inventory.txt", "r") as file:
+            for line in file:
+                line = line.strip()
 
-        lines = file.readlines()
-        file.close()
+                if line == "":
+                    continue
 
-        total = int(lines[0].strip())
+                parts = line.split(",")
 
-        history = []
+                if len(parts) == 3:
+                    try:
+                        order_id = int(parts[0].strip())
+                        product_name = parts[1].strip()
+                        quantity = int(parts[2].strip())
 
-        for line in lines[1:]:
-            history.append(int(line.strip()))
+                        orders.append([order_id, product_name, quantity])
 
-        return total, history
+                    except ValueError:
+                        continue
 
     except FileNotFoundError:
-        # No inventory.txt yet
-        return 0, []
+        # Start with empty inventory if file does not exist
+        orders = []
+
+    return orders
 
 
-def save_inventory(total, history):
-    file = open("inventory.txt", "w")
-
-    # Save total inventory
-    file.write(str(total) + "\n")
-
-    # Save transaction history
-    for amount in history:
-        file.write(str(amount) + "\n")
-
-    file.close()
+# Save all orders to inventory.txt
+def save_inventory(orders):
+    with open("inventory.txt", "w") as file:
+        for order in orders:
+            file.write(
+                str(order[0]) + "," +
+                order[1] + "," +
+                str(order[2]) + "\n"
+            )
 
 
-def get_valid_input():
+# Generate next order ID
+def get_next_order_id(orders):
+    if len(orders) == 0:
+        return 1001
+
+    highest_id = orders[0][0]
+
+    for order in orders:
+        if order[0] > highest_id:
+            highest_id = order[0]
+
+    return highest_id + 1
+
+
+# Get valid quantity
+def get_quantity():
     while True:
-        stock = input("Enter stock quantity (Quit to stop): ")
+        quantity = input("Enter Quantity: ")
 
-        if stock.upper() == "QUIT":
+        if quantity.upper() == "QUIT":
             return "quit"
 
         try:
-            stock = int(stock)
+            quantity = int(quantity)
 
-            if stock < 0:
-                print("Negative numbers are not accepted")
+            if quantity > 0:
+                return quantity
             else:
-                return stock
+                print("Quantity must be greater than 0.")
 
         except ValueError:
-            print("Invalid input, try again")
+            print("Invalid quantity. Please enter a number.")
 
 
-def process_delivery(current_total, new_value):
-    return current_total + new_value
+# Display all orders
+def display_inventory(orders):
+    print()
+    print("Current Orders:")
+    print()
+
+    if len(orders) == 0:
+        print("No current orders.")
+
+    else:
+        for order in orders:
+            print(
+                str(order[0]) + ", " +
+                order[1] + ", " +
+                str(order[2])
+            )
 
 
-def calculate_tax(amount):
-    return amount * 0.10
+# =====================================
+# MAIN PROGRAM
+# =====================================
+
+orders = load_inventory()
+
+# Display inventory when program starts
+display_inventory(orders)
+
+print()
 
 
-def generate_report(total_units, failed_attempts):
-    print("\nFinal Report")
-    print("Total Inventory:", total_units)
-    print("Failed/Rejected Entries:", failed_attempts)
-
-
-# ---------------- MAIN PROGRAM ----------------
-
-inventory, history = load_inventory()
-
-failed_attempts = 0
-
-print("Current Inventory:", inventory)
-
+# Keep running until user types quit
 while True:
 
-    stock = get_valid_input()
+    product_name = input("Enter Product Name (or quit to stop): ")
 
-    if stock == "quit":
+    # Quit program
+    if product_name.upper() == "QUIT":
         break
 
-    inventory = process_delivery(inventory, stock)
+    # Check for empty product name
+    if product_name.strip() == "":
+        print("Product name cannot be empty.")
+        print()
+        continue
 
-    # Add valid transaction to history list
-    history.append(stock)
+    # Get quantity
+    quantity = get_quantity()
 
-    tax = calculate_tax(stock)
+    # Quit if user types quit for quantity
+    if quantity == "quit":
+        break
 
-    print("Delivery added:", stock)
-    print("Tax:", tax)
-    print("Current Inventory:", inventory)
+    # Generate next order ID
+    order_id = get_next_order_id(orders)
+
+    # Create new order
+    new_order = [order_id, product_name, quantity]
+
+    # Add to inventory
+    orders.append(new_order)
+
+    print()
+    print("New Order Added:")
+    print(
+        str(order_id) + "," +
+        product_name + "," +
+        str(quantity)
+    )
+
+    print()
 
 
-# Save everything when user quits
-save_inventory(inventory, history)
+# =====================================
+# WHEN USER TYPES QUIT
+# =====================================
 
-generate_report(inventory, failed_attempts)
+# Save inventory
+save_inventory(orders)
 
-print("\nTransaction History:", history)
-print("Inventory successfully saved to inventory.txt")
+print()
+print("Order successfully saved to inventory.txt")
+
+# Show entire final inventory
+print()
+print("Final Inventory:")
+print()
+
+if len(orders) == 0:
+    print("No orders.")
+
+else:
+    for order in orders:
+        print(
+            str(order[0]) + ", " +
+            order[1] + ", " +
+            str(order[2])
+        )
