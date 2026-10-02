@@ -3,3 +3,4 @@
 1003,vacuum,90
 1004,wireless mouse,2
 1005,mouse,2
+1006,wirelss mouse,4
